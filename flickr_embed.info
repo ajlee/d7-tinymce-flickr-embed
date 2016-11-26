@@ -1,0 +1,7 @@
+name = flickr embed
+description = adds a button to tinymce wysiwyg editor for adding tweets
+package = custom
+core = 7.x
+files[] = twembed.module
+dependencies[] = flickr:flickr_filter
+url = http://github.com/ajlee/d7-tinymce-flickr-embed

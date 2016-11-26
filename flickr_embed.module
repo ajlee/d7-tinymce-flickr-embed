@@ -1,0 +1,138 @@
+<?php
+/**
+ * Implementation of hook_wysiwyg_plugin().
+ */
+function flickr_embed_wysiwyg_plugin($editor, $version) {
+  switch ($editor) {
+    case 'tinymce':
+      if ($version > 3) {
+          return array(
+            'flickr_embed' => array(
+              'path' => drupal_get_path('module', 'flickr_embed') .'/wysiwyg/tinymce/',
+              'filename' => 'editor_plugin.js',
+              'buttons' => array('flickr_embed' => t('Flickr Embed')),
+              'load' => TRUE,
+              'url' => 'https://github.com/ajlee/d7-tinymce-flickr-embed',
+            ),
+          );
+      }
+    break;
+  }
+}
+
+/**
+ * Implementation of hook_menu().
+ *
+ * @return An array of menu items.
+ */
+function flickr_embed_menu() {
+  $items = array();
+
+  $items['flickr_embed/wysiwyg'] = array(
+    'title' => 'Flickr Embed',
+    'description' => 'WYSIWYG Popup',
+    'page callback' => 'flickr_embed_wysiwyg_popup',
+    'access arguments' => array('access flickr wysiwyg popup'),
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+/**
+ * Implementation of hook_permission().
+ *
+ * @return An array of valid permissions for the module
+ */
+function flickr_embed_permission() {
+  return array(
+    'access flickr wysiwyg popup' => array(
+      'title' => t('Access Flickr WYSIWYG popup'),
+      'description' => t('Allow users to access Flickr WYSIWYG popup window'),
+    ),
+  );
+}
+
+function flickr_embed_theme($existing, $type, $theme, $path) {
+  return array(
+    'flickr_embed_wysiwyg_popup' => array(
+      'variables' => array(
+        'path' => NULL,
+        'tinymce_path' => NULL,
+        'tinymce_js' => NULL,
+      ),
+      'template' => 'flickr-embed-wysiwyg-popup',
+      'path' => drupal_get_path('module', 'flickr_embed') . '/theme',
+    ),
+  );
+}
+/**
+ * Load the WYSIWYG popup window.
+ */
+function flickr_embed_wysiwyg_popup() {
+  $path = base_path() . drupal_get_path('module', 'flickr_embed');
+  $tinymce_path = base_path() .'sites/all/libraries';
+  $tinymce_js = $tinymce_path .'/tinymce/jscripts/tiny_mce/tiny_mce_popup.js';
+
+  print theme('flickr_embed_wysiwyg_popup', array(
+    'path' => $path,
+    'tinymce_path' => $tinymce_path, 
+    'tinymce_js' => $tinymce_js,
+    'form' => render(drupal_get_form('_flickr_embed_form'))
+  ));
+  exit();
+}
+
+function _flickr_embed_form() {
+  $form['#action'] = '#';
+  $form['#id'] = 'flickr_embed_popup_form';
+  $form['#prefix'] = '<div id="flickr_embed_popup">';
+  $form['#suffix'] = '</div>';
+  $form['#attributes'] = array(
+    'onsubmit' => array('insertFlickrEmbedCode(); return false;'),
+  );
+
+  $form['flickr_embed']['is_album'] = array(
+    '#type' => 'select',
+    '#title' => t('Photo or Album'),
+    '#options' => array (
+	t('Single Photo'),
+	t('Album')
+    ),
+    '#required'=> true,
+    '#suffix' => '<br/>',
+  );
+  $form['flickr_embed']['url'] = array(
+    '#type' => 'textfield',
+    '#title' =>t('Enter the URL for the album or photo on Flickr'),
+    '#size' => 60,
+    '#default_value' => '',
+    '#weight' => 1,
+  );
+  $form['flickr_embed']['instructions'] = array (
+    '#markup' => '<p>Example URLs:<li>Album: https://www.flickr.com/photos/foeeurope/albums/72157672490786053</li><li>Photo: https://www.flickr.com/photos/foeeurope/30668022881/</li></p>
+  	<p>The code inserted can be customised using the documentation for the Flickr module in drupal. For more info, see <a href="https://www.drupal.org/node/2477263">customising the inserted code</a></p>
+    	<p>If you are using someone else\'s photo, make sure you have the right to use it.</p>', 
+    '#weight' => 2,
+  );
+
+  $form['insert'] = array(
+    '#type' => 'submit',
+    '#id' => 'insert',
+    '#value' => t('Insert'),
+    '#weight' => 98,
+  );
+
+  $form['cancel'] = array(
+    '#type' => 'button',
+    '#id' => 'cancel',
+    '#value' => t('Cancel'),
+    '#attributes' => array(
+      'onclick' => array('tinyMCEPopup.close(); return false;'),
+    ),
+    '#weight' => 99,
+  );
+
+  return $form;
+}
+
